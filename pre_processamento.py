@@ -1,30 +1,26 @@
+# Importações
 import pandas as pd
 import numpy as np
-from imblearn.under_sampling import RandomUnderSampler
 from collections import defaultdict
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import ShuffleSplit
-import math
-from sklearn.model_selection import cross_val_score
+from imblearn.under_sampling import RandomUnderSampler
 
-d1 = pd.read_csv("GENES\\family.csv", sep=",", on_bad_lines='warn')
-d2 = pd.read_csv("GENES\\gene_has_family.csv", sep=",", on_bad_lines='warn')
-d3 = pd.read_csv("GENES\\genes.tsv", sep="\t", on_bad_lines='warn')
+# Leitura dos arquivos extraidos da base HGNC
+d1 = pd.read_csv("GENES\\family.csv", sep=",", on_bad_lines='warn')    # Informações das famílias gênicas
+d2 = pd.read_csv("GENES\\gene_has_family.csv", sep=",", on_bad_lines='warn')    # informações de quais genes pertencem as suas repesctivas famílias    
+d3 = pd.read_csv("GENES\\genes.tsv", sep="\t", on_bad_lines='warn')    # Informações de todos os genes catalogados pela HGNC
 
-df1 = pd.DataFrame()
-
-def Conjunto():
+# Realizar o pre-processamento dos conjuntos de dados da GEO
+def PreProcessamento():
+    # Pedir para o usuário informar o conjunto de dados a ser carregado.
     caminho = input("Digite o número do conjunto de dados a ser carregado: \n\n1- Ulcerative Colitis\n2- Glioma\n3- Metastatic prostate cancer (HG-U95C)\n4- Metastatic prostate cancer (HG-U95A)\n5- Lung cancer\n6- Lung adenocarcinoma\n7- Leukemia\n8- Pulmonary hypertension\n9- Non-small cell lung carcinoma\n10- Colorectal cancer \n\n")
-
-    global df1
 
     if caminho == '1':       # ulcerative colitis
         df = pd.read_csv('DATA\\GDS3268.soft', sep="\t",header=None, on_bad_lines='warn')
 
-        #Genes
+        #Carregar lista de genes associado a este conjunto. (Realizado em todos os conjuntos de dados abaixo).
         df1 = pd.read_csv("GENES\\colitis.tsv", sep="\t", on_bad_lines='warn')
 
-        # Atribuição de números as classes
+        # Identificação das amostras saudáveis para a atribuição de números as classes. (Realizado em todos os conjuntos de dados abaixo).
         ot = ['GSM282855','GSM282856','GSM282857','GSM282858','GSM282859','GSM282860','GSM282861','GSM282862','GSM282863','GSM282864','GSM282865','GSM282866','GSM282867','GSM282868','GSM282869','GSM282870','GSM282871','GSM282872','GSM282873','GSM282874','GSM282875','GSM282876','GSM282877','GSM282878','GSM282879','GSM282880','GSM282881','GSM282882','GSM282883','GSM282884','GSM282885','GSM282886','GSM282887','GSM282888','GSM282889','GSM282890','GSM282891','GSM282892','GSM282893','GSM282894','GSM282895','GSM282896','GSM282897','GSM282898','GSM282899','GSM282900','GSM282901','GSM282902','GSM282903','GSM282904','GSM282905','GSM282906','GSM282907','GSM282908','GSM282909','GSM282910','GSM282911','GSM282912','GSM282913','GSM282914','GSM282915','GSM282916','GSM282917','GSM282918','GSM282919','GSM282920','GSM282921','GSM282922','GSM282923','GSM282924','GSM282925','GSM282926','GSM282927']
 
     elif caminho == '2':         # Glioma
@@ -95,9 +91,10 @@ def Conjunto():
         ot = ['GSM494616','GSM494617','GSM494618','GSM494619','GSM494620','GSM494621','GSM494622','GSM494623','GSM494624','GSM494625','GSM494626','GSM494627','GSM494628','GSM494629','GSM494630','GSM494631','GSM494632','GSM494633','GSM494634','GSM494635','GSM494636','GSM494637','GSM494638','GSM494639','GSM494640','GSM494641','GSM494642','GSM494643','GSM494644','GSM494645','GSM494646','GSM494647','GSM494648','GSM494649','GSM494650','GSM494651','GSM494652','GSM494653','GSM494654','GSM494655','GSM494656','GSM494657','GSM494658','GSM494659','GSM494660','GSM494661','GSM494662','GSM494663','GSM494664','GSM494665','GSM494666','GSM494667','GSM494668','GSM494669','GSM494670','GSM494671','GSM494672','GSM494673','GSM494674','GSM494675']
 
     elif caminho == '10':     # Colorectal cancer
+        # Como as amostras estão separadas em dois conjuntos de dados, foi necessário junta-los.
         df0 = pd.read_csv("DATA\\GDS4516.soft", sep="\t",header=None, on_bad_lines='warn')
         df = pd.read_csv("DATA\\GDS4718.soft", sep="\t",header=None, on_bad_lines='warn')
-        #df = pd.concat([df0, df], axis=1, join='inner')
+        
         df = pd.merge(df0, df, on=[0, 1], how="inner")
 
         # Genes
@@ -125,15 +122,15 @@ def Conjunto():
     clas = clas.astype('int')
     conjunto['Classe'] = clas
 
-    #under sampling
+    #under sampling para remoçõa de amostras da classe majoritária.
     rus = RandomUnderSampler(random_state=42)
     X_res, y_res = rus.fit_resample(conjunto.drop('Classe', axis=1), clas)
     conjunto = X_res
     conjunto['Classe'] = y_res
     clas = conjunto['Classe']
 
-    # Atualizar genes do conjunto
-    d4 = d3.loc[:, ['hgnc_id', 'alias_symbol']]
+    # Atualizar todos os genes do conjunto de dados quando necessário
+    d4 = d3.loc[:, ['hgnc_id', 'alias_symbol']] # identifica todos os apelidos anteriores (alias_symbol) do gene atual (hgnc_id)
     d4 = d4.dropna()
 
     dic = defaultdict(list)
@@ -143,12 +140,14 @@ def Conjunto():
             ids = row.hgnc_id
 
             subgenes = row.alias_symbol
-            subgenes = subgenes.split('|')
+            subgenes = subgenes.split('|')    # os apelidos anteriores estão separados pelo caractere "|"
 
+            # para cada apelido anterior, comparar se ele está nomeado nas colunas do conjunto de dados.
             for i in subgenes:
                 if gene == i:
                     dic[ids].append(gene)
 
+    # Para todos os genes antigos identificados, obter o ID atual do gene no dicionário para atualiza-lo no conjunto de dados.
     for chave, valor in dic.items():
         c = set(valor)
         var = d3.loc[d3['hgnc_id'] == chave]
@@ -157,7 +156,8 @@ def Conjunto():
         else:
             for i in c:
                 conjunto.rename(columns={i: var.iat[0,1]}, inplace=True)
-
+                
+    # Embaralhar as amostras do conjunto de dados
     conjunto = conjunto.sample(frac = 1, random_state=42)
     conjunto = conjunto.reset_index(drop=True)
 
