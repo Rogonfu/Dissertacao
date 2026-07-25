@@ -8,7 +8,7 @@ O arquivo "GENES.zip" contém todas as listas de genes extraidas da base de dado
 
 O arquivo "Algoritmo.ipynb" contém o carregamento dos conjuntos zipados no arquivo "GENES.zip", junto do carregamento dos conjuntos de dados pré-processados da pasta DATA e as subsequentes etapas do framework GSM.
 
-O arquivo "Algoritmo-GSMC" contém as mesmas etapas do arquivo "Algoritmo.ipynb", modificando apenas a nova etapa adicionada ao framework.
+O arquivo "Algoritmo-GSMC" contém as mesmas etapas do arquivo "Algoritmo.ipynb", modificando apenas a nova etapa de combinação adicionada ao framework.
 
 
 
